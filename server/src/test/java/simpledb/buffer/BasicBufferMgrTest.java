@@ -94,7 +94,7 @@ public class BasicBufferMgrTest {
    */
   @Test
   public void testLRUStrategy() {
-    thrown.expect(UnsupportedOperationException.class); //  remove this line once useLRUStrategy is implemented
+    //thrown.expect(UnsupportedOperationException.class); //  remove this line once useLRUStrategy is implemented
     int expectedResult, result;
     System.out.println("LRU Strategy");
     instance.setStrategy(2);
