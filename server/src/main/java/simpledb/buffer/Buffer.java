@@ -21,6 +21,7 @@ public class Buffer {
    private int modifiedBy = -1;  // negative means not modified
    private int logSequenceNumber = -1; // negative means no corresponding log record
    private Instant timestamp = Instant.now();
+   private Instant timeUnpinned = Instant.now();
 
    /**
     * Creates a new buffer, wrapping a new 
@@ -194,5 +195,11 @@ public class Buffer {
    }
    public void setTimeStamp() {
      timestamp = Instant.now();
+   }
+   public Instant getTimeUnpinned() {
+     return timeUnpinned;
+   }
+   public void setTimeUnpinned() {
+     timeUnpinned = Instant.now();
    }
 }

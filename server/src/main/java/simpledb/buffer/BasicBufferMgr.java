@@ -65,6 +65,7 @@ class BasicBufferMgr {
       if (!buff.isPinned())
          numAvailable--;
       buff.pin();
+      buff.setTimeStamp();
       return buff;
    }
    
@@ -84,6 +85,7 @@ class BasicBufferMgr {
       buff.assignToNew(filename, fmtr);
       numAvailable--;
       buff.pin();
+      buff.setTimeStamp();
       return buff;
    }
    
@@ -93,6 +95,7 @@ class BasicBufferMgr {
     */
    synchronized void unpin(Buffer buff) {
       buff.unpin();
+      buff.setTimeUnpinned();
       if (!buff.isPinned())
          numAvailable++;
    }
@@ -148,7 +151,6 @@ class BasicBufferMgr {
    private Buffer useNaiveStrategy() {
       for (Buffer buff : bufferpool)
           if (!buff.isPinned()) {
-            buff.setTimeStamp();
             return buff;
           }
       return null;
@@ -166,7 +168,6 @@ class BasicBufferMgr {
         bufferMap.put(buff.getTimeStamp(), buff);
       }
       useBuff = bufferMap.get(bufferMap.firstKey());
-      useBuff.setTimeStamp();
       return useBuff;
    }
    /**
@@ -174,7 +175,15 @@ class BasicBufferMgr {
     * @return 
     */
    private Buffer useLRUStrategy() {
-      throw new UnsupportedOperationException();
+      //throw new UnsupportedOperationException();
+      SortedMap<Instant,Buffer> bufferMap;
+      bufferMap = new TreeMap();
+      Buffer useBuff = null;
+      for (Buffer buff : bufferpool) {
+        bufferMap.put(buff.getTimeUnpinned(), buff);
+      }
+      useBuff = bufferMap.get(bufferMap.firstKey());
+      return useBuff;
    }
    /**
     * Clock buffer selection strategy
