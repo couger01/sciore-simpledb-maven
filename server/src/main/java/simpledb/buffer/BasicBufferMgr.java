@@ -1,5 +1,8 @@
 package simpledb.buffer;
 
+import java.time.Instant;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import simpledb.file.*;
 
 /**
@@ -144,8 +147,10 @@ class BasicBufferMgr {
     */
    private Buffer useNaiveStrategy() {
       for (Buffer buff : bufferpool)
-         if (!buff.isPinned())
-         return buff;
+          if (!buff.isPinned()) {
+            buff.setTimeStamp();
+            return buff;
+          }
       return null;
    }
    /**
@@ -153,7 +158,16 @@ class BasicBufferMgr {
     * @return 
     */
    private Buffer useFIFOStrategy() {
-      throw new UnsupportedOperationException();
+      //throw new UnsupportedOperationException();
+      SortedMap<Instant,Buffer> bufferMap;
+      bufferMap = new TreeMap();
+      Buffer useBuff = null;
+      for (Buffer buff : bufferpool) {
+        bufferMap.put(buff.getTimeStamp(), buff);
+      }
+      useBuff = bufferMap.get(bufferMap.firstKey());
+      useBuff.setTimeStamp();
+      return useBuff;
    }
    /**
     * LRU buffer selection strategy
