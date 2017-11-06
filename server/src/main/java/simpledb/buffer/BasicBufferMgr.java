@@ -1,5 +1,8 @@
 package simpledb.buffer;
 
+import java.time.Instant;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import simpledb.file.*;
 
 /**
@@ -10,7 +13,8 @@ import simpledb.file.*;
 class BasicBufferMgr {
    private Buffer[] bufferpool;
    private int numAvailable;
-   
+   private int strategy;
+
    /**
     * Creates a buffer manager having the specified number 
     * of buffer slots.
@@ -61,6 +65,7 @@ class BasicBufferMgr {
       if (!buff.isPinned())
          numAvailable--;
       buff.pin();
+      buff.setTimeStamp();
       return buff;
    }
    
@@ -80,6 +85,7 @@ class BasicBufferMgr {
       buff.assignToNew(filename, fmtr);
       numAvailable--;
       buff.pin();
+      buff.setTimeStamp();
       return buff;
    }
    
@@ -89,6 +95,7 @@ class BasicBufferMgr {
     */
    synchronized void unpin(Buffer buff) {
       buff.unpin();
+      buff.setTimeUnpinned();
       if (!buff.isPinned())
          numAvailable++;
    }
@@ -111,9 +118,78 @@ class BasicBufferMgr {
    }
    
    private Buffer chooseUnpinnedBuffer() {
+     switch (this.strategy) {
+      case 0:
+       return useNaiveStrategy();
+      case 1:
+        return useFIFOStrategy();
+      case 2:
+        return useLRUStrategy();
+      case 3:
+        return useClockStrategy();
+      default:
+        return null;
+     }
+   }
+   /**
+    * @return Allocated buffers
+    */
+   public Buffer[] getBuffers() {
+     return this.bufferpool;
+   }
+   /**
+    * Set buffer selection strategy
+    * @param s (0 - Naive, 1 - FIFO, 2 - LRU, 3 - Clock)
+    */
+   public void setStrategy(int s) {
+     this.strategy = s;
+   }
+   /**
+    * Naive buffer selection strategy
+    * @return 
+    */
+   private Buffer useNaiveStrategy() {
       for (Buffer buff : bufferpool)
-         if (!buff.isPinned())
-         return buff;
+          if (!buff.isPinned()) {
+            return buff;
+          }
       return null;
+   }
+   /**
+    * FIFO buffer selection strategy
+    * @return 
+    */
+   private Buffer useFIFOStrategy() {
+      //throw new UnsupportedOperationException();
+      SortedMap<Instant,Buffer> bufferMap;
+      bufferMap = new TreeMap();
+      Buffer useBuff = null;
+      for (Buffer buff : bufferpool) {
+        bufferMap.put(buff.getTimeStamp(), buff);
+      }
+      useBuff = bufferMap.get(bufferMap.firstKey());
+      return useBuff;
+   }
+   /**
+    * LRU buffer selection strategy
+    * @return 
+    */
+   private Buffer useLRUStrategy() {
+      //throw new UnsupportedOperationException();
+      SortedMap<Instant,Buffer> bufferMap;
+      bufferMap = new TreeMap();
+      Buffer useBuff = null;
+      for (Buffer buff : bufferpool) {
+        bufferMap.put(buff.getTimeUnpinned(), buff);
+      }
+      useBuff = bufferMap.get(bufferMap.firstKey());
+      return useBuff;
+   }
+   /**
+    * Clock buffer selection strategy
+    * @return 
+    */
+   private Buffer useClockStrategy() {
+      throw new UnsupportedOperationException();
    }
 }
