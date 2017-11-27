@@ -1,5 +1,10 @@
 package simpledb.tx;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import simpledb.server.SimpleDB;
 import simpledb.file.Block;
 import simpledb.buffer.*;
@@ -19,6 +24,9 @@ public class Transaction {
    private ConcurrencyMgr concurMgr;
    private int txnum;
    private BufferList myBuffers = new BufferList();
+   private static Object lock = new Object();
+   private List currentTransactionsList = Collections.synchronizedList(new ArrayList());
+   private long MAXTIME;
    
    /**
     * Creates a new transaction and its associated 
@@ -36,6 +44,13 @@ public class Transaction {
       txnum       = nextTxNumber();
       recoveryMgr = new RecoveryMgr(txnum);
       concurMgr   = new ConcurrencyMgr();
+      currentTransactionsList.add(this);
+     try {
+       lock.wait();
+       Thread.sleep(1000);
+     } catch (InterruptedException ex) {
+       Logger.getLogger(Transaction.class.getName()).log(Level.SEVERE, null, ex);
+     }
    }
    
    /**
@@ -48,6 +63,7 @@ public class Transaction {
       recoveryMgr.commit();
       concurMgr.release();
       myBuffers.unpinAll();
+      currentTransactionsList.remove(currentTransactionsList.size()-1);
       System.out.println("transaction " + txnum + " committed");
    }
    
@@ -62,6 +78,7 @@ public class Transaction {
       recoveryMgr.rollback();
       concurMgr.release();
       myBuffers.unpinAll();
+      currentTransactionsList.remove(currentTransactionsList.size()-1);
       System.out.println("transaction " + txnum + " rolled back");
    }
    
@@ -202,5 +219,11 @@ public class Transaction {
       nextTxNum++;
       System.out.println("new transaction: " + nextTxNum);
       return nextTxNum;
+   }
+   private boolean waitingTooLong(long startTime) {
+     return System.currentTimeMillis() - startTime > MAXTIME;
+   }
+   public static Object getLock() {
+     return lock;
    }
 }
