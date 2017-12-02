@@ -25,7 +25,7 @@ public class Transaction {
    private int txnum;
    private BufferList myBuffers = new BufferList();
    private static Object lock = new Object();
-   private List currentTransactionsList = Collections.synchronizedList(new ArrayList());
+   private static List currentTransactionsList = Collections.synchronizedList(new ArrayList());
    private long MAXTIME;
    
    /**
@@ -48,6 +48,10 @@ public class Transaction {
      try {
        lock.wait();
        Thread.sleep(1000);
+       if (currentTransactionsList.size() == 10) {
+         CheckpointThread.inProgress = true;
+         new Thread(new CheckpointThread().start())
+       }
      } catch (InterruptedException ex) {
        Logger.getLogger(Transaction.class.getName()).log(Level.SEVERE, null, ex);
      }
@@ -225,5 +229,8 @@ public class Transaction {
    }
    public static Object getLock() {
      return lock;
+   }
+   public static List getCurrentTransactionsList() {
+     return currentTransactionsList;
    }
 }
