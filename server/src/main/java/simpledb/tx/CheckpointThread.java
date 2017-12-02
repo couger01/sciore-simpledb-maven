@@ -18,12 +18,16 @@ public class CheckpointThread implements Runnable {
   private boolean inProgress = false;
   @Override
   public void run() {
-    while (currentTransaction.size != 0) {
-      synchronized (Transaction.getLock()) try {
+    while (Transaction.getCurrentTransactionsList().size() != 0) {
+      synchronized (Transaction.getLock()){
+        try {
         checkpointLock.wait();
+        bufferManager.flushAll();
+        
       } catch (InterruptedException ex) {
           Logger.getLogger(CheckpointThread.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
   }
+}
 }
